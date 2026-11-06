@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rock & Corse — lecteur</title>
+<style>
+  :root{--bg:#08090c;--card:#14171d;--line:#242a33;--txt:#f2f4f8;--dim:#8f9aab;--acc:#e11d48}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt);padding:14px 14px 80px}
+  h1{font-size:20px;margin:0 0 3px;letter-spacing:-.02em}
+  .sub{color:var(--dim);font-size:12px;margin-bottom:14px}
+  input{width:100%;background:#0f1319;border:1px solid var(--line);color:var(--txt);padding:12px 14px;border-radius:11px;font:inherit;font-size:15px;margin-bottom:10px}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chips button{flex:0 0 auto;background:#171b22;border:1px solid var(--line);color:var(--dim);padding:9px 14px;border-radius:20px;font:inherit;font-size:12px}
+  .chips button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .b{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .art{aspect-ratio:1;background:linear-gradient(135deg,#1f2937,#111827);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#3f4a5c;position:relative}
+  .art img{width:100%;height:100%;object-fit:cover;display:block}
+  .b .in{padding:9px 10px 11px}
+  .b .n{font-size:13px;font-weight:700;line-height:1.25;margin-bottom:2px}
+  .b .s{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+  .acts{display:flex;gap:6px}
+  .acts a{flex:1;text-align:center;text-decoration:none;font-size:11px;padding:7px 0;border-radius:8px;background:#1d2430;color:var(--txt)}
+  .acts a.yt{background:#c4302b;color:#fff}
+  .acts a.sp{background:#1db954;color:#04170a;font-weight:700}
+  .foot{position:fixed;left:0;right:0;bottom:0;background:#0d1014;border-top:1px solid var(--line);padding:10px 14px;font-size:11px;color:var(--dim);text-align:center}
+  .empty{color:var(--dim);font-size:13px;padding:20px 0;text-align:center}
+</style>
+</head>
+<body>
+<h1>Rock & Corse</h1>
+<div class="sub">Les groupes, les pochettes, et tu lances sur YouTube ou Spotify.</div>
+<input id="q" placeholder="Chercher un groupe..." oninput="render()">
+<div class="chips" id="chips"></div>
+<div class="grid" id="grid"></div>
+<div class="foot">Pochettes : iTunes · Écoute : YouTube et Spotify</div>
+
+<script>
+const B = [
+ ["I Muvrini","Rock corse","I Muvrini"],
+ ["A Filetta","Polyphonies corses","A Filetta"],
+ ["L'Arcusgi","Rock corse","L Arcuisgi"],
+ ["Surghjenti","Rock corse","Surghjenti"],
+ ["Diana di l'Alba","Rock corse","Diana di l Alba"],
+ ["Chjami Aghjalesi","Polyphonies corses","Chjami Aghjalesi"],
+ ["Voce Ventu","Polyphonies corses","Voce Ventu"],
+ ["Tavagna","Polyphonies corses","Tavagna"],
+ ["Petru Guelfucci","Voix corse","Petru Guelfucci"],
+ ["Antoine Ciosi","Chanson corse","Antoine Ciosi"],
+ ["Jean-Paul Poletti","Voix corse","Jean Paul Poletti"],
+ ["Canta u Populu Corsu","Chanson corse","Canta u Populu Corsu"],
+ ["Led Zeppelin","Rock international","Led Zeppelin"],
+ ["Pink Floyd","Rock international","Pink Floyd"],
+ ["Queen","Rock international","Queen"],
+ ["AC/DC","Rock international","AC DC"],
+ ["The Rolling Stones","Rock international","The Rolling Stones"],
+ ["Deep Purple","Rock international","Deep Purple"],
+ ["Black Sabbath","Metal","Black Sabbath"],
+ ["Metallica","Metal","Metallica"],
+ ["Iron Maiden","Metal","Iron Maiden"],
+ ["Rammstein","Metal","Rammstein"],
+ ["Gojira","Metal français","Gojira"],
+ ["Mass Hysteria","Metal français","Mass Hysteria"],
+ ["Noir Désir","Rock français","Noir Desir"],
+ ["Téléphone","Rock français","Telephone"],
+ ["Trust","Rock français","Trust"],
+ ["Indochine","Rock français","Indochine"],
+ ["Shaka Ponk","Rock français","Shaka Ponk"],
+ ["Pleymo","Néo-metal français","Pleymo"],
+ ["Tagada Jones","Punk français","Tagada Jones"],
+ ["Nirvana","Grunge","Nirvana"],
+ ["Foo Fighters","Rock US","Foo Fighters"],
+ ["Queens of the Stone Age","Stoner","Queens of the Stone Age"],
+ ["Arctic Monkeys","Rock UK","Arctic Monkeys"],
+ ["Royal Blood","Rock UK","Royal Blood"],
+ ["Nothing But Thieves","Rock UK","Nothing But Thieves"],
+ ["Fontaines D.C.","Post-punk","Fontaines DC"],
+ ["Idles","Post-punk","Idles"],
+ ["Muse","Rock UK","Muse"],
+ ["The Strokes","Indie rock","The Strokes"],
+ ["Red Hot Chili Peppers","Rock US","Red Hot Chili Peppers"],
+ ["Green Day","Punk US","Green Day"],
+ ["System of a Down","Néo-metal","System of a Down"],
+ ["Rage Against the Machine","Rap metal","Rage Against the Machine"],
+ ["Placebo","Rock UK","Placebo"],
+ ["Deftones","Néo-metal","Deftones"],
+ ["Tool","Metal progressif","Tool"]
+];
+let cat='Tous';
+const cats=['Tous',...new Set(B.map(b=>b[1]))];
+const chips=document.getElementById('chips'), grid=document.getElementById('grid'), q=document.getElementById('q');
+chips.innerHTML=cats.map(c=>`<button onclick="setCat('${c.replace(/'/g,"\\'")}')" data-c="${c}">${c}</button>`).join('');
+function setCat(c){ cat=c; render(); }
+const cache={};
+
+async function art(name, el){
+  try{
+    let url = cache[name];
+    if(!url){
+      const r = await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(name)+'&entity=album&limit=1');
+      const j = await r.json();
+      url = j.results && j.results[0] ? j.results[0].artworkUrl100.replace('100x100','400x400') : '';
+      cache[name]=url;
+    }
+    if(url){ el.innerHTML='<img loading="lazy" alt="" src="'+url+'">'; }
+  }catch(e){ /* garde le dégradé */ }
+}
+
+function render(){
+  [...chips.children].forEach(b=>b.classList.toggle('on', b.dataset.c===cat));
+  const term=(q.value||'').toLowerCase();
+  const list=B.filter(b=>(cat==='Tous'||b[1]===cat) && (!term || b[0].toLowerCase().includes(term) || b[1].toLowerCase().includes(term)));
+  if(!list.length){ grid.innerHTML='<div class="empty">Aucun groupe trouvé.</div>'; return; }
+  grid.innerHTML=list.map((b,i)=>`
+    <div class="b">
+      <div class="art" id="a${i}">${b[0].slice(0,2).toUpperCase()}</div>
+      <div class="in">
+        <div class="n">${b[0]}</div>
+        <div class="s">${b[1]}</div>
+        <div class="acts">
+          <a class="yt" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(b[2]+' album')}">▶</a>
+          <a class="sp" target="_blank" rel="noopener" href="https://open.spotify.com/search/${encodeURIComponent(b[0])}">Spot</a>
+        </div>
+      </div>
+    </div>`).join('');
+  list.forEach((b,i)=>art(b[2], document.getElementById('a'+i)));
+}
+render();
+</script>
+</body>
+</html>
